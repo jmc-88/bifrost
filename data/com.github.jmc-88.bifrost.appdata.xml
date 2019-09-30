@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2019 Daniele Cocca <daniele.cocca@gmail.com> -->
+<component type="desktop">
+  <id>com.github.jmc-88.bifrost</id>
+  <metadata_license>CC0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Bifrost</name>
+  <summary>Send your files to another computer over the Internet</summary>
+  <description>
+    <p>Securely transfer files over the Internet from one computer to another. Provides a graphical user interface for Magic Wormhole.</p>
+  </description>
+  <url>
+    <homepage>https://www.github.com/jmc-88/bifrost</homepage>
+    <bugtracker>https://www.github.com/jmc-88/bifrost/issues</bugtracker>
+  </url>
+</component>

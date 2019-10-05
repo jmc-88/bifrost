@@ -34,9 +34,13 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+import os
+import sys
+
 import gi
 import wormhole
 import wormhole.cli.public_relay
+from twisted.internet import defer, task
 
 from . import views, widgets
 
@@ -46,16 +50,6 @@ from gi.repository import Gio, Gdk, Gtk, GObject, Granite  # isort:skip
 
 
 APPLICATION_ID = r"com.github.jmc-88.bifrost"
-
-
-def make_notifier(application, message, title="Mock", notification_id="mock"):
-    def _notify(_):
-        notification = Gio.Notification.new(title)
-        notification.set_icon(Gio.ThemedIcon.new("dialog-information"))
-        notification.set_body(message)
-        application.send_notification(notification_id, notification)
-
-    return _notify
 
 
 class CodeEntry(widgets.EntryWithValidation):
@@ -135,12 +129,12 @@ class MainWindow(Gtk.ApplicationWindow):
         app = self.props.application
         welcome = views.WelcomeView()
         welcome.connect("send-clicked", lambda _: stack.set_visible_child_name("send"))
-        welcome.connect("receive-clicked", make_notifier(app, "Receive!"))
-        welcome.connect("downloads-clicked", make_notifier(app, "Downloads!"))
+        welcome.connect("receive-clicked", _make_notifier(app, "Receive!"))
+        welcome.connect("downloads-clicked", _make_notifier(app, "Downloads!"))
         stack.add_named(welcome, "welcome")
 
         send = views.SendView()
-        send.connect("file-chosen", lambda _1, path: make_notifier(app, path)(_1))
+        send.connect("file-chosen", lambda _1, path: _make_notifier(app, path)(_1))
         stack.add_named(send, "send")
 
     def update_visibility(self):
@@ -153,12 +147,18 @@ class MainWindow(Gtk.ApplicationWindow):
 
 
 class Bifrost(Gtk.Application):
-    def __init__(self, reactor):
-        self.wormhole = wormhole.create(
-            APPLICATION_ID, wormhole.cli.public_relay.RENDEZVOUS_RELAY, reactor
-        )
+    def __init__(self, reactor, argv0):
         super().__init__(
             application_id=APPLICATION_ID, flags=Gio.ApplicationFlags.FLAGS_NONE
+        )
+
+        resources = Gio.Resource.load(_resources_filename(argv0))
+        if not resources:
+            raise RuntimeError("can't load resources file from")
+        Gio.resources_register(resources)
+
+        self.wormhole = wormhole.create(
+            APPLICATION_ID, wormhole.cli.public_relay.RENDEZVOUS_RELAY, reactor
         )
 
     def do_activate(self):
@@ -166,11 +166,50 @@ class Bifrost(Gtk.Application):
         win.show_all()
 
         css_provider = Gtk.CssProvider.new()
-        css_provider.load_from_path("data/application.css")
+        # css_provider.load_from_path("data/application.css")
         # TODO: it should instead be:
-        #   css_provider.load_from_resource("com/github/jmc-88/bifrost/application.css")
+        css_provider.load_from_resource("com/github/jmc-88/bifrost/application.css")
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(),
             css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
+
+
+def _make_notifier(application, message, title="Mock", notification_id="mock"):
+    def _notify(_):
+        notification = Gio.Notification.new(title)
+        notification.set_icon(Gio.ThemedIcon.new("dialog-information"))
+        notification.set_body(message)
+        application.send_notification(notification_id, notification)
+
+    return _notify
+
+
+def _resources_filename(argv0):
+    path = os.environ.get("_DEBUG_RESOURCE_PATH")
+    if path:
+        return os.path.abspath(path)
+
+    return os.path.abspath(
+        path=os.path.join(
+            os.path.dirname(os.path.dirname(argv0)),
+            "share",
+            APPLICATION_ID,
+            f"{APPLICATION_ID}.gresource",
+        )
+    )
+
+
+def _bifrost_main(reactor, argv=()):
+    app = Bifrost(reactor, argv[0])
+    rc = app.run(argv)
+    if rc != 0:
+        return defer.fail(
+            rc
+        )  # TODO: something better please, also check out SystemExit()
+    return defer.succeed("ok")
+
+
+def main():
+    task.react(_bifrost_main, (sys.argv,))

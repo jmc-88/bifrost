@@ -1,0 +1,20 @@
+Source: com.github.jmc-88.bifrost
+Section: x11
+Priority: optional
+Maintainer: Daniele Cocca <daniele.cocca@gmail.com>
+Build-Depends: debhelper (>= 10.5.1),
+               gettext,
+               libgtk-3-dev (>= 3.10),
+               python3
+Standards-Version: 4.1.1
+X-Python3-Version: >= 3.5
+Homepage: https://github.com/jmc-88/bifrost
+Vcs-Git: https://github.com/jmc-88/bifrost.git
+Vcs-Browser: https://github.com/jmc-88/bifrost
+
+Package: com.github.jmc-88.bifrost
+Architecture: any
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: Secure file transfer
+ Securely transfer files over the Internet from one computer to another.
+ Provides a graphical user interface for Magic Wormhole.

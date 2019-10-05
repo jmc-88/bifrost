@@ -34,24 +34,8 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import sys
-
-from twisted.internet import defer, task
-
-from . import bifrost
-
-
-def main(reactor, argv=()):
-    app = bifrost.Bifrost(reactor)
-    rc = app.run(sys.argv)
-    if rc != 0:
-        return defer.fail(
-            rc
-        )  # TODO: something better please, also check out SystemExit()
-    return defer.succeed("ok")
+from .bifrost import main
 
 
 if __name__ == "__main__":
-    task.react(main, (sys.argv))
-else:
-    raise ImportError("this module should not be imported")
+    main()

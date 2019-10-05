@@ -2,6 +2,12 @@
 /tags
 /.vscode
 
+# Compiled binary assets
+*.gresource
+
+# Packaging artifacts
+.pybuild/
+
 # -- 8< -- https://github.com/github/gitignore/blob/master/Python.gitignore -- 8< --
 # Byte-compiled / optimized / DLL files
 __pycache__/

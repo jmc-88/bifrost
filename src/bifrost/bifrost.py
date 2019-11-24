@@ -166,8 +166,6 @@ class Bifrost(Gtk.Application):
         win.show_all()
 
         css_provider = Gtk.CssProvider.new()
-        # css_provider.load_from_path("data/application.css")
-        # TODO: it should instead be:
         css_provider.load_from_resource("com/github/jmc-88/bifrost/application.css")
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(),

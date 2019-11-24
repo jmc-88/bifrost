@@ -98,6 +98,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.back_button = Gtk.Button.new_with_label("Back")
         self.back_button.get_style_context().add_class(Granite.STYLE_CLASS_BACK_BUTTON)
+        self.back_button.connect("clicked", lambda _: self.show_child("welcome"))
 
         self.spinner = Gtk.Spinner.new()
         self.spinner.start()
@@ -119,27 +120,35 @@ class MainWindow(Gtk.ApplicationWindow):
         headerbar.pack_end(self.spinner)
         self.set_titlebar(headerbar)
 
-        stack = widgets.StackWithBulletIcons()
-        stack.set_border_width(10)
-        stack.set_expand(True)
-        stack.set_align(Gtk.Align.FILL)
-        stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        self.add(stack)
+        self.stack = widgets.StackWithBulletIcons()
+        self.stack.set_border_width(10)
+        self.stack.set_expand(True)
+        self.stack.set_align(Gtk.Align.FILL)
+        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        self.add(self.stack)
 
         app = self.props.application
         welcome = views.WelcomeView()
-        welcome.connect("send-clicked", lambda _: stack.set_visible_child_name("send"))
+        welcome.connect("send-clicked", lambda _: self.show_child("send"))
         welcome.connect("receive-clicked", _make_notifier(app, "Receive!"))
         welcome.connect("downloads-clicked", _make_notifier(app, "Downloads!"))
-        stack.add_named(welcome, "welcome")
+        self.stack.add_named(welcome, "welcome")
 
         send = views.SendView()
         send.connect("file-chosen", lambda _1, path: _make_notifier(app, path)(_1))
-        stack.add_named(send, "send")
+        self.stack.add_named(send, "send")
+
+    def show_child(self, child_name):
+        self.stack.set_visible_child_name(child_name)
+        self.update_visibility()
 
     def update_visibility(self):
-        self.back_button.hide()
         self.spinner.hide()
+
+        if self.stack.get_visible_child_name() == "welcome":
+            self.back_button.hide()
+        else:
+            self.back_button.show()
 
     def show_all(self):
         super().show_all()

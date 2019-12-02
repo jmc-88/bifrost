@@ -135,7 +135,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.stack.add_named(welcome, "welcome")
 
         send = views.SendView()
-        send.connect("file-chosen", lambda _1, path: _make_notifier(app, path)(_1))
+        send.connect("files-chosen", lambda _1, path: _make_notifier(app, path)(_1))
         self.stack.add_named(send, "send")
 
     def show_child(self, child_name):

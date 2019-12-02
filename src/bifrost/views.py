@@ -96,7 +96,7 @@ class SendView(Gtk.EventBox):
         super().__init__()
 
         GObject.signal_new(
-            "file-chosen",
+            "files-chosen",
             self,
             GObject.SignalFlags.ACTION,
             GObject.TYPE_NONE,
@@ -140,13 +140,14 @@ class SendView(Gtk.EventBox):
             ("_Cancel", Gtk.ResponseType.CANCEL, "_Upload", Gtk.ResponseType.ACCEPT),
         )
         chooser.set_default_response(Gtk.ResponseType.ACCEPT)
+        chooser.set_select_multiple(True)
 
         filter_ = Gtk.FileFilter()
         filter_.add_pattern("*")
         chooser.set_filter(filter_)
 
         if chooser.run() == Gtk.ResponseType.ACCEPT:
-            path, _ = GLib.filename_from_uri(chooser.get_uri())
-            self.emit("file-chosen", path)
+            paths = [GLib.filename_from_uri(u)[0] for u in chooser.get_uris()]
+            self.emit("files-chosen", paths)
 
         chooser.close()

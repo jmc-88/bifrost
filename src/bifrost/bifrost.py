@@ -34,6 +34,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+import logging
 import os
 import sys
 
@@ -46,10 +47,11 @@ from . import views, widgets
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Granite", "1.0")
-from gi.repository import Gio, Gdk, Gtk, GObject, Granite  # isort:skip
+from gi.repository import Gio, Gdk, Gtk, GObject, GLib, Granite  # isort:skip
 
 
 APPLICATION_ID = r"com.github.jmc-88.bifrost"
+log = logging.getLogger(__name__)
 
 
 class CodeEntry(widgets.EntryWithValidation):
@@ -78,6 +80,19 @@ class CodeEntry(widgets.EntryWithValidation):
             | Gtk.InputHints.WORD_COMPLETION
             | Gtk.InputHints.LOWERCASE
         )
+
+
+def _ShowDownloads(_):
+    """Opens $XDG_DOWNLOAD_DIR with the default file manager."""
+
+    download_dir_uri = GLib.get_user_special_dir(GLib.USER_DIRECTORY_DOWNLOAD)
+    if not download_dir_uri:
+        logging.error("Couldn't find a value for $XDG_DOWNLOAD_DIR")
+        return
+
+    if not Gio.AppInfo.launch_default_for_uri(f"file://{download_dir_uri}"):
+        logging.error('Couldn\'t open "%s"', download_dir_uri)
+        return
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -131,7 +146,7 @@ class MainWindow(Gtk.ApplicationWindow):
         welcome = views.WelcomeView()
         welcome.connect("send-clicked", lambda _: self.show_child("send"))
         welcome.connect("receive-clicked", _make_notifier(app, "Receive!"))
-        welcome.connect("downloads-clicked", _make_notifier(app, "Downloads!"))
+        welcome.connect("downloads-clicked", _ShowDownloads)
         self.stack.add_named(welcome, "welcome")
 
         send = views.SendView()

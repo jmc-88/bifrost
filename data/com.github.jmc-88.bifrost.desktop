@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Bifrost
+GenericName=Peer-to-peer File Transfer
+Comment=Send files to another computer over the Internet
+Categories=Network;Utility;
+Exec=com.github.jmc-88.bifrost
+Icon=bifrost
+Terminal=false
+Type=Application
+Keywords=File;Transfer;Peer-to-peer;Magic;Wormhole;
+X-GNOME-UsesNotifications=true

@@ -34,6 +34,9 @@
 #ifndef BIFROST_SRC_VIEWS_HH
 #define BIFROST_SRC_VIEWS_HH
 
+#include <string>
+#include <vector>
+
 #include <granite.h>
 #include <gtkmm.h>
 #include <sigc++/sigc++.h>
@@ -49,6 +52,27 @@ class WelcomeView : public Gtk::Box {
 
  private:
   GraniteWidgetsWelcome* welcome;
+};
+
+class SendView : public Gtk::EventBox {
+ public:
+  SendView();
+
+  using event_signal_t = sigc::signal<void, const std::vector<std::string>&>;
+  event_signal_t signal_files_chosen;
+
+ private:
+  Gtk::Box drop;
+  Gtk::Label title;
+  Gtk::Label subtitle;
+
+  void process_chosen_files(const std::vector<Glib::ustring>&);
+
+  bool on_button_press_event(GdkEventButton* /*button_event*/) override;
+
+  void on_drag_data_received(const Glib::RefPtr<Gdk::DragContext>& context, int,
+                             int, const Gtk::SelectionData& selection_data,
+                             guint, guint time) override;
 };
 
 #endif  // BIFROST_SRC_VIEWS_HH

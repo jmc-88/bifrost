@@ -31,6 +31,9 @@
 // OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
+#include <iterator>
+
 #include "views.hh"
 
 WelcomeView::WelcomeView() {
@@ -66,4 +69,77 @@ WelcomeView::WelcomeView() {
                                  GTK_STYLE_CLASS_VIEW);
   gtk_container_add(GTK_CONTAINER(gobj()), welcome_widget);
   gtk_widget_show_all(welcome_widget);
+}
+
+SendView::SendView() {
+  drop.set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
+  drop.set_spacing(0);
+  drop.set_hexpand(true);
+  drop.set_vexpand(true);
+  drop.show();
+  add(drop);
+
+  title.set_label("Drag files and folders here");
+  title.get_style_context()->add_class("h2");
+  title.set_hexpand(true);
+  title.set_vexpand(true);
+  title.set_valign(Gtk::Align::ALIGN_END);
+  title.show();
+  drop.add(title);
+
+  subtitle.set_label("Or click to select a file");
+  subtitle.get_style_context()->add_class("h3");
+  subtitle.set_opacity(0.5);
+  subtitle.set_hexpand(true);
+  subtitle.set_vexpand(true);
+  subtitle.set_valign(Gtk::Align::ALIGN_START);
+  subtitle.show();
+  drop.add(subtitle);
+
+  drag_dest_set(
+      {Gtk::TargetEntry("text/uri-list", Gtk::TargetFlags::TARGET_OTHER_APP)},
+      Gtk::DestDefaults::DEST_DEFAULT_ALL,
+      Gdk::DragAction::ACTION_COPY | Gdk::DragAction::ACTION_MOVE);
+}
+
+void SendView::process_chosen_files(
+    const std::vector<Glib::ustring>& chosen_uris) {
+  std::vector<std::string> filenames;
+  std::transform(
+      chosen_uris.cbegin(), chosen_uris.cend(), std::back_inserter(filenames),
+      [](const Glib::ustring& uri) { return Glib::filename_from_uri(uri); });
+  signal_files_chosen.emit(filenames);
+}
+
+void SendView::on_drag_data_received(
+    const Glib::RefPtr<Gdk::DragContext>& context, int, int,
+    const Gtk::SelectionData& selection_data, guint, guint time) {
+  if (selection_data.get_length() < 0) {
+    context->drag_finish(false, false, time);
+    return;
+  }
+
+  process_chosen_files(selection_data.get_uris());
+  context->drag_finish(true, false, time);
+}
+
+bool SendView::on_button_press_event(GdkEventButton* /*button_event*/) {
+  auto chooser =
+      Gtk::FileChooserDialog(dynamic_cast<Gtk::Window&>(*get_toplevel()),
+                             "Select files or directories");
+  chooser.add_button(Gtk::Stock::CANCEL, Gtk::ResponseType::RESPONSE_CANCEL);
+  chooser.add_button("_Upload", Gtk::ResponseType::RESPONSE_ACCEPT);
+  chooser.set_default_response(Gtk::ResponseType::RESPONSE_ACCEPT);
+  chooser.set_select_multiple(true);
+
+  auto filter = Gtk::FileFilter::create();
+  filter->set_name("Any file or directory");
+  filter->add_pattern("*");
+  chooser.set_filter(filter);
+
+  if (chooser.run() == Gtk::ResponseType::RESPONSE_ACCEPT)
+    process_chosen_files(chooser.get_uris());
+
+  chooser.close();
+  return true;
 }

@@ -81,19 +81,44 @@ class BifrostWindow : public Gtk::ApplicationWindow {
 
     spinner.start();
 
-    // TODO: welcome_view.signal_send_selected.connect(...);
+    stack.set_border_width(10);
+    stack.set_hexpand(true);
+    stack.set_vexpand(true);
+    stack.set_valign(Gtk::Align::ALIGN_FILL);
+    stack.set_halign(Gtk::Align::ALIGN_FILL);
+    stack.set_transition_type(
+        Gtk::StackTransitionType::STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
+    stack.show();
+    add(stack);
+
+    welcome_view.signal_send_selected.connect(
+        sigc::mem_fun(*this, &BifrostWindow::on_signal_send_selected));
     // TODO: welcome_view.signal_receive_selected.connect(...);
     welcome_view.signal_downloads_selected.connect(
         sigc::ptr_fun(ShowDownloads));
     welcome_view.show();
-    add(welcome_view);
+    stack.add(welcome_view);
+
+    send_view.signal_files_chosen.connect(
+        sigc::mem_fun(*this, &BifrostWindow::on_signal_files_chosen));
+    send_view.show();
+    stack.add(send_view);
   }
 
  private:
   Gtk::Button back_button = Gtk::Button("Back");
   Gtk::Spinner spinner;
   Gtk::HeaderBar headerbar;
+  Gtk::Stack stack;
   WelcomeView welcome_view;
+  SendView send_view;
+
+  void on_signal_send_selected() { stack.set_visible_child(send_view); }
+
+  void on_signal_files_chosen(const std::vector<std::string>& filenames) {
+    // TODO: actually do something :)
+    for (auto const& f : filenames) g_warning("filename: %s", f.c_str());
+  }
 };
 
 int main(int argc, char* argv[]) {

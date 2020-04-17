@@ -31,8 +31,15 @@
 // OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
+#include <cassert>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include <granite.h>
 #include <gtkmm.h>
+#include <sigc++/sigc++.h>
 
 #include "views.hh"
 
@@ -52,6 +59,64 @@ static void ShowDownloads() {
     return;
   }
 }
+
+class TreeNavigation : public Gtk::Stack {
+ public:
+  using RootWidget = std::nullptr_t;
+
+  template <typename T>
+  using ChildWidget = T;
+
+  template <typename T>
+  static ChildWidget<T> ChildOf(T&& widget) {
+    return std::forward<T>(widget);
+  }
+
+  void add(Gtk::Widget& widget, RootWidget /*has_no_parent*/) {
+    assert(root_widget == nullptr);
+    Gtk::Stack::add(widget);
+    set_root_widget(widget);
+  }
+
+  void add(Gtk::Widget& widget, ChildWidget<Gtk::Widget&> parent) {
+    Gtk::Stack::add(widget);
+    widget_to_parent.emplace(&widget, &parent);
+  }
+
+  bool back() {
+    auto it = widget_to_parent.find(get_visible_child());
+    if (it == widget_to_parent.end()) return false;
+    set_visible_child(*it->second);
+    return true;
+  }
+
+  void set_visible_child(Gtk::Widget& widget) {
+    Gtk::Stack::set_visible_child(widget);
+
+    auto it = widget_to_parent.find(get_visible_child());
+    if (it == widget_to_parent.end())
+      signal_enter_root_widget.emit();
+    else
+      signal_leave_root_widget.emit();
+  }
+
+  using event_signal_t = sigc::signal<void>;
+  event_signal_t signal_enter_root_widget;
+  event_signal_t signal_leave_root_widget;
+
+ private:
+  Gtk::Widget* root_widget = nullptr;
+  std::unordered_map<Gtk::Widget*, Gtk::Widget*> widget_to_parent;
+
+  bool set_root_widget(Gtk::Widget& widget) {
+    auto children = get_children();
+    if (std::find(children.begin(), children.end(), &widget) == children.end())
+      return false;
+
+    root_widget = &widget;
+    return true;
+  }
+};
 
 class BifrostWindow : public Gtk::ApplicationWindow {
  public:
@@ -77,19 +142,18 @@ class BifrostWindow : public Gtk::ApplicationWindow {
 
     back_button.set_label("Back");
     back_button.get_style_context()->add_class(GRANITE_STYLE_CLASS_BACK_BUTTON);
-    back_button.signal_clicked().connect([] { g_warning("**TODO**\n"); });
+    back_button.signal_clicked().connect(
+        sigc::mem_fun(*this, &BifrostWindow::on_back_button_clicked));
 
     spinner.start();
 
-    stack.set_border_width(10);
-    stack.set_hexpand(true);
-    stack.set_vexpand(true);
-    stack.set_valign(Gtk::Align::ALIGN_FILL);
-    stack.set_halign(Gtk::Align::ALIGN_FILL);
-    stack.set_transition_type(
+    navigation.set_border_width(10);
+    navigation.set_hexpand(true);
+    navigation.set_vexpand(true);
+    navigation.set_valign(Gtk::Align::ALIGN_FILL);
+    navigation.set_halign(Gtk::Align::ALIGN_FILL);
+    navigation.set_transition_type(
         Gtk::StackTransitionType::STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
-    stack.show();
-    add(stack);
 
     welcome_view.signal_send_selected.connect(
         sigc::mem_fun(*this, &BifrostWindow::on_signal_send_selected));
@@ -97,23 +161,36 @@ class BifrostWindow : public Gtk::ApplicationWindow {
     welcome_view.signal_downloads_selected.connect(
         sigc::ptr_fun(ShowDownloads));
     welcome_view.show();
-    stack.add(welcome_view);
+    navigation.add(welcome_view, TreeNavigation::RootWidget());
 
     send_view.signal_files_chosen.connect(
         sigc::mem_fun(*this, &BifrostWindow::on_signal_files_chosen));
     send_view.show();
-    stack.add(send_view);
+    navigation.add(send_view, TreeNavigation::ChildOf(welcome_view));
+
+    navigation.signal_enter_root_widget.connect(
+        sigc::mem_fun(*this, &BifrostWindow::on_navigation_enter_root_widget));
+    navigation.signal_leave_root_widget.connect(
+        sigc::mem_fun(*this, &BifrostWindow::on_navigation_leave_root_widget));
+    navigation.show();
+    add(navigation);
   }
 
  private:
   Gtk::Button back_button = Gtk::Button("Back");
   Gtk::Spinner spinner;
   Gtk::HeaderBar headerbar;
-  Gtk::Stack stack;
+  TreeNavigation navigation;
   WelcomeView welcome_view;
   SendView send_view;
 
-  void on_signal_send_selected() { stack.set_visible_child(send_view); }
+  void on_navigation_enter_root_widget() { back_button.hide(); }
+
+  void on_navigation_leave_root_widget() { back_button.show(); }
+
+  void on_back_button_clicked() { navigation.back(); }
+
+  void on_signal_send_selected() { navigation.set_visible_child(send_view); }
 
   void on_signal_files_chosen(const std::vector<std::string>& filenames) {
     // TODO: actually do something :)

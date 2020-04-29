@@ -32,9 +32,6 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
-#include <cassert>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include <granite.h>
@@ -42,6 +39,7 @@
 #include <sigc++/sigc++.h>
 
 #include "views.hh"
+#include "tree_navigation.hh"
 
 static const char kApplicationId[] = "com.github.jmc-88.bifrost";
 
@@ -59,64 +57,6 @@ static void ShowDownloads() {
     return;
   }
 }
-
-class TreeNavigation : public Gtk::Stack {
- public:
-  using RootWidget = std::nullptr_t;
-
-  template <typename T>
-  using ChildWidget = T;
-
-  template <typename T>
-  static ChildWidget<T> ChildOf(T&& widget) {
-    return std::forward<T>(widget);
-  }
-
-  void add(Gtk::Widget& widget, RootWidget /*has_no_parent*/) {
-    assert(root_widget == nullptr);
-    Gtk::Stack::add(widget);
-    set_root_widget(widget);
-  }
-
-  void add(Gtk::Widget& widget, ChildWidget<Gtk::Widget&> parent) {
-    Gtk::Stack::add(widget);
-    widget_to_parent.emplace(&widget, &parent);
-  }
-
-  bool back() {
-    auto it = widget_to_parent.find(get_visible_child());
-    if (it == widget_to_parent.end()) return false;
-    set_visible_child(*it->second);
-    return true;
-  }
-
-  void set_visible_child(Gtk::Widget& widget) {
-    Gtk::Stack::set_visible_child(widget);
-
-    auto it = widget_to_parent.find(get_visible_child());
-    if (it == widget_to_parent.end())
-      signal_enter_root_widget.emit();
-    else
-      signal_leave_root_widget.emit();
-  }
-
-  using event_signal_t = sigc::signal<void>;
-  event_signal_t signal_enter_root_widget;
-  event_signal_t signal_leave_root_widget;
-
- private:
-  Gtk::Widget* root_widget = nullptr;
-  std::unordered_map<Gtk::Widget*, Gtk::Widget*> widget_to_parent;
-
-  bool set_root_widget(Gtk::Widget& widget) {
-    auto children = get_children();
-    if (std::find(children.begin(), children.end(), &widget) == children.end())
-      return false;
-
-    root_widget = &widget;
-    return true;
-  }
-};
 
 class BifrostWindow : public Gtk::ApplicationWindow {
  public:

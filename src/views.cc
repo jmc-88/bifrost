@@ -41,10 +41,19 @@ WelcomeView::WelcomeView() {
                                         "What would you like to do?");
   granite_widgets_welcome_append(welcome, "document-export", "Send Files",
                                  "Upload data to another computer");
-  granite_widgets_welcome_append(welcome, "document-import", "Receive Files",
-                                 "Download data from another computer");
+  gint receive_button_idx = granite_widgets_welcome_append(
+      welcome, "document-import", "Receive Files",
+      "Download data from another computer");
   granite_widgets_welcome_append(welcome, "folder", "Show Downloads",
                                  "Open your Downloads folder");
+
+  // Mark "Receive Files" as yet to be implemented.
+  granite_widgets_welcome_set_item_sensitivity(welcome, receive_button_idx,
+                                               false);
+  auto* receive_button = granite_widgets_welcome_get_button_from_index(
+      welcome, receive_button_idx);
+  gtk_widget_set_tooltip_text(GTK_WIDGET(receive_button),
+                              "Not implemented yet");
 
   auto on_activated =
       +[](GraniteWidgetsWelcome* /*welcome*/, gint index, WelcomeView* self) {

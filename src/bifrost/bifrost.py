@@ -118,20 +118,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.spinner = Gtk.Spinner.new()
         self.spinner.start()
 
-        settings_button = Gtk.Button.new_from_icon_name(
-            "open-menu-symbolic", Gtk.IconSize.SMALL_TOOLBAR
-        )
-        settings_button.set_always_show_image(True)
-        settings_button.set_tooltip_text("Settings")
-        settings_button.connect("clicked", lambda _: None)
-
         headerbar = Gtk.HeaderBar.new()
         headerbar.get_style_context().add_class("rainbow")
         headerbar.get_style_context().add_class(Gtk.STYLE_CLASS_FLAT)
         headerbar.set_show_close_button(True)
         headerbar.set_title("Bifrost")
         headerbar.pack_start(self.back_button)
-        headerbar.pack_end(settings_button)
         headerbar.pack_end(self.spinner)
         self.set_titlebar(headerbar)
 
@@ -140,7 +132,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self.stack.set_expand(True)
         self.stack.set_align(Gtk.Align.FILL)
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        self.add(self.stack)
 
         app = self.props.application
         welcome = views.WelcomeView()
@@ -152,6 +143,11 @@ class MainWindow(Gtk.ApplicationWindow):
         send = views.SendView()
         send.connect("files-chosen", lambda _1, path: _make_notifier(app, path)(_1))
         self.stack.add_named(send, "send")
+
+        vbox = Gtk.VBox.new(False, 0)
+        vbox.add(self.stack)
+        vbox.add(widgets.AdvancedSettingsPane.new(app))
+        self.add(vbox)
 
     def show_child(self, child_name):
         self.stack.set_visible_child_name(child_name)
@@ -181,9 +177,38 @@ class Bifrost(Gtk.Application):
             raise RuntimeError("can't load resources file from")
         Gio.resources_register(resources)
 
-        self.wormhole = wormhole.create(
-            APPLICATION_ID, wormhole.cli.public_relay.RENDEZVOUS_RELAY, reactor
-        )
+        self.reactor = reactor
+        self._application_id = APPLICATION_ID
+        self._rendezvous_relay = wormhole.cli.public_relay.RENDEZVOUS_RELAY
+        self._transit_relay = wormhole.cli.public_relay.TRANSIT_RELAY
+        self.initialize_wormhole()
+
+    @property
+    def application_id(self):
+        return self._application_id
+
+    @application_id.setter
+    def application_id(self, value: str):
+        self._application_id = value
+        self.initialize_wormhole()
+
+    @property
+    def rendezvous_relay(self):
+        return self._rendezvous_relay
+
+    @rendezvous_relay.setter
+    def rendezvous_relay(self, value: str):
+        self._rendezvous_relay = value
+        self.initialize_wormhole()
+
+    @property
+    def transit_relay(self):
+        return self._transit_relay
+
+    @transit_relay.setter
+    def transit_relay(self, value: str):
+        self._transit_relay = value
+        self.initialize_wormhole()
 
     def do_activate(self):
         win = MainWindow(self.wormhole, application=self, title="Bifrost")
@@ -195,6 +220,11 @@ class Bifrost(Gtk.Application):
             Gdk.Screen.get_default(),
             css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+    def initialize_wormhole(self):
+        self.wormhole = wormhole.create(
+            self.application_id, self.rendezvous_relay, self.reactor
         )
 
 

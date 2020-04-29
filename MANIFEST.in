@@ -1,0 +1,4 @@
+include src/bifrost/*.py
+include data/com.github.jmc-88.bifrost.desktop
+include data/com.github.jmc-88.bifrost.appdata.xml
+include data/com.github.jmc-88.bifrost.svg

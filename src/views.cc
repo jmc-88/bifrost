@@ -32,6 +32,7 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 
 #include "views.hh"
@@ -150,5 +151,52 @@ bool SendView::on_button_press_event(GdkEventButton* /*button_event*/) {
     process_chosen_files(chooser.get_uris());
 
   chooser.close();
+  return true;
+}
+
+SendCodeView::SendCodeView() {
+  box.set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
+  box.set_spacing(0);
+  box.set_hexpand(true);
+  box.set_vexpand(true);
+  box.show();
+  add(box);
+
+  title.set_label("The wormhole code is");
+  title.get_style_context()->add_class("h2");
+  title.set_hexpand(true);
+  title.set_vexpand(true);
+  title.set_valign(Gtk::Align::ALIGN_END);
+  title.show();
+  box.add(title);
+
+  // This, obviously, is not a real code. It's just here as a placeholder to
+  // test the layout.
+  // TODO: replace with real code
+  code.set_label("N-word1-word2");
+  code.get_style_context()->add_class("h1");
+  code.get_style_context()->add_class("code");
+  code.set_hexpand(true);
+  code.set_vexpand(true);
+  code.set_valign(Gtk::Align::ALIGN_START);
+  code.set_line_wrap(false);
+  code.set_selectable(true);
+  code.show();
+  box.add(code);
+
+  code.signal_button_press_event().connect(
+      sigc::mem_fun(*this, &SendCodeView::on_code_button_press_event),
+      /*after=*/false);
+}
+
+bool SendCodeView::on_code_button_press_event(GdkEventButton* button_event) {
+  // Respond to left mouse click only.
+  if (button_event->button != 1) return false;
+
+  // Selects all the text currently in the label.
+  code.select_region(/*start=*/0);
+
+  auto clipboard = Gtk::Clipboard::get(GDK_SELECTION_CLIPBOARD);
+  clipboard->set_text(code.get_text());
   return true;
 }

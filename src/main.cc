@@ -38,8 +38,8 @@
 #include <gtkmm.h>
 #include <sigc++/sigc++.h>
 
-#include "views.hh"
 #include "tree_navigation.hh"
+#include "views.hh"
 
 static const char kApplicationId[] = "com.github.jmc-88.bifrost";
 
@@ -107,6 +107,8 @@ class BifrostWindow : public Gtk::ApplicationWindow {
         sigc::mem_fun(*this, &BifrostWindow::on_signal_files_chosen));
     send_view.show();
     navigation.add(send_view, TreeNavigation::ChildOf(welcome_view));
+    send_code_view.show();
+    navigation.add(send_code_view, TreeNavigation::ChildOf(send_view));
 
     navigation.signal_enter_root_widget.connect(
         sigc::mem_fun(*this, &BifrostWindow::on_navigation_enter_root_widget));
@@ -123,6 +125,7 @@ class BifrostWindow : public Gtk::ApplicationWindow {
   TreeNavigation navigation;
   WelcomeView welcome_view;
   SendView send_view;
+  SendCodeView send_code_view;
 
   void on_navigation_enter_root_widget() { back_button.hide(); }
 
@@ -133,8 +136,7 @@ class BifrostWindow : public Gtk::ApplicationWindow {
   void on_signal_send_selected() { navigation.set_visible_child(send_view); }
 
   void on_signal_files_chosen(const std::vector<std::string>& filenames) {
-    // TODO: actually do something :)
-    for (auto const& f : filenames) g_warning("filename: %s", f.c_str());
+    navigation.set_visible_child(send_code_view);
   }
 };
 

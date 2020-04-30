@@ -75,4 +75,16 @@ class SendView : public Gtk::EventBox {
                              guint, guint time) override;
 };
 
+class SendCodeView : public Gtk::EventBox {
+ public:
+  SendCodeView();
+
+ private:
+  Gtk::Box box;
+  Gtk::Label title;
+  Gtk::Label code;
+
+  bool on_code_button_press_event(GdkEventButton* button_event);
+};
+
 #endif  // BIFROST_SRC_VIEWS_HH

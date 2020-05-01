@@ -63,6 +63,8 @@ class BifrostWindow : public Gtk::ApplicationWindow {
   BifrostWindow() {
     auto action_group = Gio::SimpleActionGroup::create();
     action_group->add_action("close", [this] { close(); });
+    action_group->add_action(
+        "back", sigc::mem_fun(*this, &BifrostWindow::on_back_button_clicked));
     insert_action_group("bifrost", action_group);
 
     set_title("Bifrost");
@@ -143,6 +145,7 @@ class BifrostWindow : public Gtk::ApplicationWindow {
 int main(int argc, char* argv[]) {
   auto app = Gtk::Application::create(argc, argv, kApplicationId);
   app->set_accel_for_action("bifrost.close", "<Primary>q");
+  app->set_accel_for_action("bifrost.back", "<Alt>Left");
 
   auto css_provider = Gtk::CssProvider::create();
   css_provider->signal_parsing_error().connect(

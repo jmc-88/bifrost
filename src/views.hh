@@ -83,6 +83,8 @@ class SendCodeView : public Gtk::EventBox {
   Gtk::Box box;
   Gtk::Label title;
   Gtk::Label code;
+  Gtk::Popover popover;
+  Gtk::Label popover_label;
 
   bool on_code_button_press_event(GdkEventButton* button_event);
 };

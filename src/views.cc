@@ -187,6 +187,12 @@ SendCodeView::SendCodeView() {
   code.signal_button_press_event().connect(
       sigc::mem_fun(*this, &SendCodeView::on_code_button_press_event),
       /*after=*/false);
+
+  popover_label.set_label("Copied to clipboard");
+  popover_label.set_padding(10, 10);
+  popover_label.show();
+  popover.set_relative_to(code);
+  popover.add(popover_label);
 }
 
 bool SendCodeView::on_code_button_press_event(GdkEventButton* button_event) {
@@ -198,5 +204,10 @@ bool SendCodeView::on_code_button_press_event(GdkEventButton* button_event) {
 
   auto clipboard = Gtk::Clipboard::get(GDK_SELECTION_CLIPBOARD);
   clipboard->set_text(code.get_text());
+
+  popover.popup();
+  Glib::signal_timeout().connect_once([&] { popover.popdown(); },
+                                      2000 /*milliseconds*/);
+
   return true;
 }

@@ -87,11 +87,11 @@ def _ShowDownloads(_):
 
     download_dir_uri = GLib.get_user_special_dir(GLib.USER_DIRECTORY_DOWNLOAD)
     if not download_dir_uri:
-        logging.error("Couldn't find a value for $XDG_DOWNLOAD_DIR")
+        log.error("Couldn't find a value for $XDG_DOWNLOAD_DIR")
         return
 
     if not Gio.AppInfo.launch_default_for_uri(f"file://{download_dir_uri}"):
-        logging.error('Couldn\'t open "%s"', download_dir_uri)
+        log.error('Couldn\'t open "%s"', download_dir_uri)
         return
 
 

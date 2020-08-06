@@ -7,6 +7,10 @@
 
 # Packaging artifacts
 .pybuild/
+/.debhelper/
+/debian/*.debhelper
+/debian/*.substvars
+/debian/com.github.jmc-88.bifrost/
 
 # -- 8< -- https://github.com/github/gitignore/blob/master/Python.gitignore -- 8< --
 # Byte-compiled / optimized / DLL files

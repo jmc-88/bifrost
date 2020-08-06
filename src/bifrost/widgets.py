@@ -43,7 +43,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject  # isort:skip
 
 
-class EntryWithValidation(Gtk.Entry):
+class EntryWithValidation(Gtk.Entry, Gtk.Editable):
     """Gtk.Entry with a custom text validation callback."""
 
     def __init__(self, validator: Callable[[Text], Text], *args, **kwargs):

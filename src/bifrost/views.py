@@ -89,7 +89,7 @@ class WelcomeView(Gtk.Box):
         welcome.connect("activated", _activated)
 
 
-class SendView(Gtk.EventBox):
+class SendView(Gtk.EventBox, Gtk.Widget):
     """Page that will be shown when selecting what to send."""
 
     def __init__(self):

@@ -166,7 +166,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.update_visibility()
 
 
-class Bifrost(Gtk.Application):
+class Bifrost(Gtk.Application, Gio.Application):
     def __init__(self, reactor, argv0):
         super().__init__(
             application_id=APPLICATION_ID, flags=Gio.ApplicationFlags.FLAGS_NONE

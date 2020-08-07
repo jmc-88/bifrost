@@ -63,3 +63,7 @@ progressbar.rainbow>trough>progress {
 .extra-padding {
     padding: 24px;
 }
+
+.monospace {
+    font-family: monospace;
+}

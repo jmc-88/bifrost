@@ -85,6 +85,7 @@ class CodeEntry(EntryWithValidation):
         completion.set_model(self.model)
 
         self.set_placeholder_text("Input Magic Wormhole code...")
+        self.get_style_context().add_class("monospace")
         self.set_halign(Gtk.Align.CENTER)
         self.set_input_hints(
             Gtk.InputHints.NO_EMOJI
@@ -138,6 +139,7 @@ class AdvancedSettingsPane(Gtk.Expander):
         label = Gtk.Label.new("Application id:")
         label.set_halign(Gtk.Align.START)
         entry = Gtk.Entry.new()
+        entry.get_style_context().add_class("monospace")
         entry.set_hexpand(True)
         entry.set_input_hints(Gtk.InputHints.NO_EMOJI)
         entry.set_text(application.application_id)
@@ -148,6 +150,7 @@ class AdvancedSettingsPane(Gtk.Expander):
         label = Gtk.Label.new("Rendezvous relay:")
         label.set_halign(Gtk.Align.START)
         entry = Gtk.Entry.new()
+        entry.get_style_context().add_class("monospace")
         entry.set_hexpand(True)
         entry.set_input_hints(Gtk.InputHints.NO_EMOJI)
         entry.set_text(application.rendezvous_relay)
@@ -158,6 +161,7 @@ class AdvancedSettingsPane(Gtk.Expander):
         label = Gtk.Label.new("Transit relay:")
         label.set_halign(Gtk.Align.START)
         entry = Gtk.Entry.new()
+        entry.get_style_context().add_class("monospace")
         entry.set_hexpand(True)
         entry.set_input_hints(Gtk.InputHints.NO_EMOJI)
         entry.set_text(application.transit_relay)

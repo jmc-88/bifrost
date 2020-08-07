@@ -34,10 +34,12 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from . import bifrost
-
 from typing import Callable, Text
+
 import gi
+import wormhole
+
+from . import bifrost
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject  # isort:skip
@@ -61,6 +63,34 @@ class EntryWithValidation(Gtk.Entry, Gtk.Editable):
         new_length = len(new_text)
         self.get_buffer().insert_text(position, new_text, new_length)
         return position + new_length
+
+
+class CodeEntry(EntryWithValidation):
+    """Gtk.Entry for Magic Wormhole codes."""
+
+    def __init__(self, wormhole: wormhole.wormhole, *args, **kwargs):
+        def _input_validator(text):
+            return "".join(c for c in text if not c.isspace())
+
+        super().__init__(_input_validator, *args, **kwargs)
+
+        completion = Gtk.EntryCompletion()
+        completion.set_text_column(0)
+        completion.set_popup_completion(False)
+        completion.set_inline_completion(True)
+        completion.set_inline_selection(True)
+        self.set_completion(completion)
+
+        self.model = Gtk.ListStore(str)
+        completion.set_model(self.model)
+
+        self.set_placeholder_text("Input Magic Wormhole code...")
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_input_hints(
+            Gtk.InputHints.NO_EMOJI
+            | Gtk.InputHints.WORD_COMPLETION
+            | Gtk.InputHints.LOWERCASE
+        )
 
 
 class StackWithBulletIcons(Gtk.Stack):

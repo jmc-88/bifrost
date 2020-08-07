@@ -54,34 +54,6 @@ APPLICATION_ID = r"com.github.jmc-88.bifrost"
 log = logging.getLogger(__name__)
 
 
-class CodeEntry(widgets.EntryWithValidation):
-    """Gtk.Entry for Magic Wormhole codes."""
-
-    def __init__(self, wormhole: wormhole.wormhole, *args, **kwargs):
-        def _input_validator(text):
-            return "".join(c for c in text if not c.isspace())
-
-        super().__init__(_input_validator, *args, **kwargs)
-
-        completion = Gtk.EntryCompletion()
-        completion.set_text_column(0)
-        completion.set_popup_completion(False)
-        completion.set_inline_completion(True)
-        completion.set_inline_selection(True)
-        self.set_completion(completion)
-
-        self.model = Gtk.ListStore(str)
-        completion.set_model(self.model)
-
-        self.set_placeholder_text("Input Magic Wormhole code...")
-        self.set_halign(Gtk.Align.CENTER)
-        self.set_input_hints(
-            Gtk.InputHints.NO_EMOJI
-            | Gtk.InputHints.WORD_COMPLETION
-            | Gtk.InputHints.LOWERCASE
-        )
-
-
 def _ShowDownloads(_):
     """Opens $XDG_DOWNLOAD_DIR with the default file manager."""
 
@@ -136,13 +108,16 @@ class MainWindow(Gtk.ApplicationWindow):
         app = self.props.application
         welcome = views.WelcomeView()
         welcome.connect("send-clicked", lambda _: self.show_child("send"))
-        welcome.connect("receive-clicked", _make_notifier(app, "Receive!"))
+        welcome.connect("receive-clicked", lambda _: self.show_child("receive"))
         welcome.connect("downloads-clicked", _ShowDownloads)
         self.stack.add_named(welcome, "welcome")
 
         send = views.SendView()
         send.connect("files-chosen", lambda _1, path: _make_notifier(app, path)(_1))
         self.stack.add_named(send, "send")
+
+        receive = views.ReceiveView(wormhole)
+        self.stack.add_named(receive, "receive")
 
         vbox = Gtk.VBox.new(False, 0)
         vbox.add(self.stack)

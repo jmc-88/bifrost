@@ -35,6 +35,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 import gi
+import wormhole
+
+from . import widgets
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Granite", "1.0")
@@ -151,3 +154,18 @@ class SendView(Gtk.EventBox, Gtk.Widget):
             self.emit("files-chosen", paths)
 
         chooser.close()
+
+
+class ReceiveView(Gtk.EventBox):
+    """Page that will be shown when choosing to receive files."""
+
+    def __init__(self, wormhole: wormhole.wormhole):
+        super().__init__()
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+        box.set_expand(True)
+        self.add(box)
+
+        code_entry = widgets.CodeEntry(wormhole)
+        code_entry.set_hexpand(True)
+        box.add(code_entry)

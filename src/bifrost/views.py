@@ -34,6 +34,8 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+import logging
+
 import gi
 import wormhole
 
@@ -42,6 +44,8 @@ from . import widgets
 gi.require_version("Gtk", "3.0")
 gi.require_version("Granite", "1.0")
 from gi.repository import Gdk, Gtk, GLib, GObject, Granite  # isort:skip
+
+log = logging.getLogger(__name__)
 
 
 class WelcomeView(Gtk.Box):
@@ -126,12 +130,12 @@ class SendView(Gtk.EventBox, Gtk.Widget):
 
         self.drag_dest_set(
             Gtk.DestDefaults.ALL,
-            [Gtk.TargetEntry.new("text/uri-list", 0, 0)],
-            Gdk.DragAction.COPY,
+            [Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0)],
+            Gdk.DragAction.COPY | Gdk.DragAction.MOVE,
         )
         self.connect("drag_motion", lambda _1, _2, _3, _4, _5: None)
         self.connect("drag_leave", lambda _1, _2, _3: None)
-        self.connect("drag_data_received", lambda _1, _2, _3, _4, _5, _6, _7: None)
+        self.connect("drag_data_received", self.on_drag_data_received)
 
     def do_button_press_event(self, event):
         del event  # unused
@@ -154,6 +158,24 @@ class SendView(Gtk.EventBox, Gtk.Widget):
             self.emit("files-chosen", paths)
 
         chooser.close()
+
+    def on_drag_data_received(
+        self,
+        widget: Gtk.Widget,
+        context: Gdk.DragContext,
+        x: int,
+        y: int,
+        data: Gtk.SelectionData,
+        info: int,
+        time: int,
+    ):
+        if data.get_length() < 0:
+            log.warning("Empty data received, ignoring")
+            Gtk.drag_finish(context, False, False, time)
+
+        paths = [GLib.filename_from_uri(u)[0] for u in data.get_uris()]
+        self.emit("files-chosen", paths)
+        Gtk.drag_finish(context, True, False, time)
 
 
 class ReceiveView(Gtk.EventBox):

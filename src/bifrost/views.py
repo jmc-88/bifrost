@@ -141,15 +141,21 @@ class SendView(Gtk.EventBox, Gtk.Widget):
         del event  # unused
 
         chooser = Gtk.FileChooserDialog(
-            "Select a file",
-            None,
+            "Select files or directories",
+            self.get_toplevel(),
             Gtk.FileChooserAction.OPEN,
-            ("_Cancel", Gtk.ResponseType.CANCEL, "_Upload", Gtk.ResponseType.ACCEPT),
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                "_Upload",
+                Gtk.ResponseType.ACCEPT,
+            ),
         )
         chooser.set_default_response(Gtk.ResponseType.ACCEPT)
         chooser.set_select_multiple(True)
 
         filter_ = Gtk.FileFilter()
+        filter_.set_name("Any file or directory")
         filter_.add_pattern("*")
         chooser.set_filter(filter_)
 

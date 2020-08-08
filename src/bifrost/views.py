@@ -137,6 +137,10 @@ class SendView(Gtk.EventBox, Gtk.Widget):
         self.connect("drag_leave", lambda _1, _2, _3: None)
         self.connect("drag_data_received", self.on_drag_data_received)
 
+    def process_uris(self, uris):
+        paths = [GLib.filename_from_uri(u)[0] for u in uris]
+        self.emit("files-chosen", paths)
+
     def do_button_press_event(self, event):
         del event  # unused
 
@@ -160,9 +164,7 @@ class SendView(Gtk.EventBox, Gtk.Widget):
         chooser.set_filter(filter_)
 
         if chooser.run() == Gtk.ResponseType.ACCEPT:
-            paths = [GLib.filename_from_uri(u)[0] for u in chooser.get_uris()]
-            self.emit("files-chosen", paths)
-
+            self.process_uris(chooser.get_uris())
         chooser.close()
 
     def on_drag_data_received(
@@ -179,8 +181,7 @@ class SendView(Gtk.EventBox, Gtk.Widget):
             log.warning("Empty data received, ignoring")
             Gtk.drag_finish(context, False, False, time)
 
-        paths = [GLib.filename_from_uri(u)[0] for u in data.get_uris()]
-        self.emit("files-chosen", paths)
+        self.process_uris(data.get_uris())
         Gtk.drag_finish(context, True, False, time)
 
 

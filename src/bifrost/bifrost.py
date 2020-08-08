@@ -213,7 +213,7 @@ def _resources_filename(argv0):
         return os.path.abspath(path)
 
     return os.path.abspath(
-        path=os.path.join(
+        os.path.join(
             os.path.dirname(os.path.dirname(argv0)),
             "share",
             APPLICATION_ID,

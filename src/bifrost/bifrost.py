@@ -37,6 +37,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import os
 import sys
+from typing import List, Text
 
 import gi
 import wormhole
@@ -113,7 +114,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.stack.add_named(welcome, "welcome")
 
         send = views.SendView()
-        send.connect("files-chosen", lambda _1, path: _make_notifier(app, path)(_1))
+        send.connect("files-chosen", self.on_files_chosen)
         self.stack.add_named(send, "send")
 
         receive = views.ReceiveView(wormhole)
@@ -139,6 +140,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def show_all(self):
         super().show_all()
         self.update_visibility()
+
+    def on_files_chosen(self, widget: Gtk.Widget, paths: List[Text]):
+        print(self.get_application().wormhole, paths)
 
 
 class Bifrost(Gtk.Application, Gio.Application):
@@ -201,16 +205,6 @@ class Bifrost(Gtk.Application, Gio.Application):
         self.wormhole = wormhole.create(
             self.application_id, self.rendezvous_relay, self.reactor
         )
-
-
-def _make_notifier(application, message, title="Mock", notification_id="mock"):
-    def _notify(_):
-        notification = Gio.Notification.new(title)
-        notification.set_icon(Gio.ThemedIcon.new("dialog-information"))
-        notification.set_body(message)
-        application.send_notification(notification_id, notification)
-
-    return _notify
 
 
 def _resources_filename(argv0):

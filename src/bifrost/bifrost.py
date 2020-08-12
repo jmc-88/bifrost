@@ -149,8 +149,18 @@ class MainWindow(Gtk.ApplicationWindow, Gtk.Widget):
         super().show_all()
         self.update_visibility()
 
+    @defer.inlineCallbacks
     def on_files_chosen(self, widget: Gtk.Widget, paths: List[Text]):
-        print(self.get_application().wormhole, paths)
+        w = self.get_application().wormhole
+        welcome = yield w.get_welcome()
+        if "motd" in welcome:
+            log.info(f"MOTD: {welcome['motd']}")
+
+        w.allocate_code()
+        code = yield w.get_code()
+        log.info(f"Wormhole code is: {code}")
+
+        # TODO: show code in UI
 
 
 class Bifrost(Gtk.Application, Gio.Application):

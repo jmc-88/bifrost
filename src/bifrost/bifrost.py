@@ -42,9 +42,14 @@ from typing import List, Text
 import gi
 import wormhole
 import wormhole.cli.public_relay
-from twisted.internet import defer, task
 
 from . import views, widgets
+
+from twisted.internet import defer, task, gtk3reactor  # isort:skip
+
+gtk3reactor.install()
+
+from twisted.internet import reactor  # isort:skip
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Granite", "1.0")
@@ -68,7 +73,7 @@ def _ShowDownloads(_):
         return
 
 
-class MainWindow(Gtk.ApplicationWindow):
+class MainWindow(Gtk.ApplicationWindow, Gtk.Widget):
     def __init__(self, wormhole, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -125,6 +130,9 @@ class MainWindow(Gtk.ApplicationWindow):
         vbox.add(widgets.AdvancedSettingsPane.new(app))
         self.add(vbox)
 
+    def do_destroy(self):
+        reactor.stop()
+
     def show_child(self, child_name):
         self.stack.set_visible_child_name(child_name)
         self.update_visibility()
@@ -146,7 +154,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
 
 class Bifrost(Gtk.Application, Gio.Application):
-    def __init__(self, reactor, argv0):
+    def __init__(self, argv0):
         super().__init__(
             application_id=APPLICATION_ID, flags=Gio.ApplicationFlags.FLAGS_NONE
         )
@@ -156,7 +164,6 @@ class Bifrost(Gtk.Application, Gio.Application):
             raise RuntimeError("can't load resources file from")
         Gio.resources_register(resources)
 
-        self.reactor = reactor
         self._application_id = APPLICATION_ID
         self._rendezvous_relay = wormhole.cli.public_relay.RENDEZVOUS_RELAY
         self._transit_relay = wormhole.cli.public_relay.TRANSIT_RELAY
@@ -203,7 +210,7 @@ class Bifrost(Gtk.Application, Gio.Application):
 
     def initialize_wormhole(self):
         self.wormhole = wormhole.create(
-            self.application_id, self.rendezvous_relay, self.reactor
+            self.application_id, self.rendezvous_relay, reactor
         )
 
 
@@ -222,15 +229,7 @@ def _resources_filename(argv0):
     )
 
 
-def _bifrost_main(reactor, argv=()):
-    app = Bifrost(reactor, argv[0])
-    rc = app.run(argv)
-    if rc != 0:
-        return defer.fail(
-            rc
-        )  # TODO: something better please, also check out SystemExit()
-    return defer.succeed("ok")
-
-
 def main():
-    task.react(_bifrost_main, (sys.argv,))
+    app = Bifrost(sys.argv[0])
+    reactor.registerGApplication(app)
+    reactor.run()

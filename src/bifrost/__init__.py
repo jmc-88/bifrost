@@ -37,7 +37,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GObject  # isort:skip
+from gi.repository import Gtk, GObject, GLib  # isort:skip
 
 
 def _gtk_widget_set_margin(widget: Gtk.Widget, margin: int) -> None:
@@ -87,3 +87,10 @@ def _gtk_accel_group_connect_and_parse(
 
 
 Gtk.AccelGroup.connect_and_parse = _gtk_accel_group_connect_and_parse
+
+
+def _glib_timeout_once(interval: int, function: "GLib.SourceFunc"):
+    return GLib.timeout_add(interval, lambda: function() and False)
+
+
+GLib.timeout_once = _glib_timeout_once

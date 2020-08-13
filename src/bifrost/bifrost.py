@@ -122,6 +122,9 @@ class MainWindow(Gtk.ApplicationWindow, Gtk.Widget):
         send.connect("files-chosen", self.on_files_chosen)
         self.stack.add_named(send, "send")
 
+        self.send_code = views.SendCodeView()
+        self.stack.add_named(self.send_code, "send-code")
+
         receive = views.ReceiveView(wormhole)
         self.stack.add_named(receive, "receive")
 
@@ -160,7 +163,8 @@ class MainWindow(Gtk.ApplicationWindow, Gtk.Widget):
         code = yield w.get_code()
         log.info(f"Wormhole code is: {code}")
 
-        # TODO: show code in UI
+        self.send_code.set_code(code)
+        self.show_child("send-code")
 
 
 class Bifrost(Gtk.Application, Gio.Application):

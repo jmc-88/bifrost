@@ -185,6 +185,58 @@ class SendView(Gtk.EventBox, Gtk.Widget):
         Gtk.drag_finish(context, True, False, time)
 
 
+class SendCodeView(Gtk.EventBox):
+    """Page that will be shown when a wormhole code has been allocated."""
+
+    def __init__(self):
+        super().__init__()
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+        box.set_expand(True)
+        self.add(box)
+
+        title = Gtk.Label.new("The wormhole code is:")
+        title.get_style_context().add_class("h2")
+        title.set_expand(True)
+        title.set_valign(Gtk.Align.END)
+        box.add(title)
+
+        self.code = Gtk.Label.new("N-word1-word2")
+        self.code.connect("button-press-event", self.on_code_button_press_event)
+        self.code.get_style_context().add_class("h1")
+        self.code.get_style_context().add_class("code")
+        self.code.set_expand(True)
+        self.code.set_valign(Gtk.Align.START)
+        self.code.set_line_wrap(False)
+        self.code.set_selectable(True)
+        box.add(self.code)
+
+        popover_label = Gtk.Label.new("Copied to clipboard")
+        popover_label.set_padding(10, 10)
+        popover_label.show()
+        self.popover = Gtk.Popover.new(self.code)
+        self.popover.add(popover_label)
+
+    def set_code(self, code: str):
+        self.code.set_label(code)
+
+    def on_code_button_press_event(self, widget: Gtk.Widget, event: Gdk.EventButton):
+        # Respond to left mouse click only.
+        if event.button != 1:
+            return False
+
+        # Selects all the text currently in the label.
+        self.code.select_region(0, -1)
+
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        clipboard.set_text(self.code.get_text(), -1)
+
+        self.popover.popup()
+        GLib.timeout_once(2000, self.popover.popdown)
+
+        return True
+
+
 class ReceiveView(Gtk.EventBox):
     """Page that will be shown when choosing to receive files."""
 
